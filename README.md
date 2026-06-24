@@ -1,3 +1,9 @@
+# 新增了触摸板全屏化功能，原版的触摸板太小了，其他一切不变
+
+## We added a full-screen mode for the trackpad — the old one was ridiculously small. Everything else is the same.
+
+
+
 <div align="center"><img src="assets/icon_round.png" width="192" /></div>
 
 ## <div align="center">BT Remote</div>
