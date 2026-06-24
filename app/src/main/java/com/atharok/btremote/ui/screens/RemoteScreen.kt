@@ -100,6 +100,9 @@ fun RemoteScreen(
     // Help
     var isHelpBottomSheetVisible: Boolean by remember { mutableStateOf(false) }
 
+    // Fullscreen
+    var isFullscreen: Boolean by rememberSaveable { mutableStateOf(false) }
+
     BackHandler(enabled = true, onBack = closeApp)
 
     PhysicalVolumeButtonsHandler(
@@ -125,7 +128,9 @@ fun RemoteScreen(
                 isMoreButtonsVisible = isMoreButtonsVisible,
                 onMoreButtonsVisibleChanged = { isMoreButtonsVisible = it },
                 isHelpBottomSheetVisible = isHelpBottomSheetVisible,
-                onHelpBottomSheetVisibleChanged = { isHelpBottomSheetVisible = it }
+                onHelpBottomSheetVisibleChanged = { isHelpBottomSheetVisible = it },
+                isFullscreen = isFullscreen,
+                onFullscreenChanged = { isFullscreen = it }
             )
         },
         remoteLayout = {
@@ -145,6 +150,7 @@ fun RemoteScreen(
                 sendKeyboardKeyReport = remoteViewModel.sendKeyboardReport,
                 sendMouseKeyReport = remoteViewModel.sendMouseReport,
                 navigationToggle = navigationToggle,
+                isFullscreen = isFullscreen
             )
         },
         overlayView = {
@@ -186,6 +192,7 @@ fun RemoteScreen(
                 }
             }
         },
+        isFullscreen = isFullscreen,
         modifier = modifier
     )
 }
@@ -199,6 +206,7 @@ private fun StatelessRemoteScreen(
     remoteLayout: @Composable () -> Unit,
     navigationLayout: @Composable () -> Unit,
     overlayView: @Composable () -> Unit,
+    isFullscreen: Boolean,
     modifier: Modifier = Modifier
 ) {
     AppScaffold(
@@ -220,6 +228,7 @@ private fun StatelessRemoteScreen(
             RemotePortraitView(
                 remoteLayout = remoteLayout,
                 navigationLayout = navigationLayout,
+                isFullscreen = isFullscreen,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -270,34 +279,43 @@ private fun RemoteLandscapeView(
 private fun RemotePortraitView(
     remoteLayout: @Composable () -> Unit,
     navigationLayout: @Composable () -> Unit,
+    isFullscreen: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .heightIn(
-                    max = with(LocalConfiguration.current) {
-                        if (screenHeightDp >= screenWidthDp * 1.9f) // Si la hauteur de l'appareil est suffisamment haute par rapport à sa largeur (ratio ~ 1/2)
-                            screenWidthDp.dp // On peut se permettre de prendre pour hauteur la largeur de l'écran
-                        else // Sinon
-                            (screenHeightDp * 0.50).dp // On prend 50% de la hauteur de l'écran
-                    }
-                )
-                .align(Alignment.CenterHorizontally),
-        ) {
-            remoteLayout()
+        if(!isFullscreen) {
+            Box(
+                modifier = Modifier
+                    .heightIn(
+                        max = with(LocalConfiguration.current) {
+                            if (screenHeightDp >= screenWidthDp * 1.9f)
+                                screenWidthDp.dp
+                            else
+                                (screenHeightDp * 0.50).dp
+                        }
+                    )
+                    .align(Alignment.CenterHorizontally),
+            ) {
+                remoteLayout()
+            }
         }
 
         Box(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(
-                    start = dimensionResource(id = R.dimen.padding_large),
-                    end = dimensionResource(id = R.dimen.padding_large),
-                    bottom = dimensionResource(id = R.dimen.padding_large)
+                .then(
+                    if(isFullscreen) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier.padding(
+                            start = dimensionResource(id = R.dimen.padding_large),
+                            end = dimensionResource(id = R.dimen.padding_large),
+                            bottom = dimensionResource(id = R.dimen.padding_large)
+                        )
+                    }
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -379,7 +397,8 @@ private fun NavigationLayout(
     sendRemoteKeyReport: (ByteArray) -> Unit,
     sendKeyboardKeyReport: (ByteArray) -> Unit,
     sendMouseKeyReport: (input: MouseAction, x: Float, y: Float, wheel: Float) -> Unit,
-    navigationToggle: NavigationToggle
+    navigationToggle: NavigationToggle,
+    isFullscreen: Boolean
 ) {
     FadeAnimatedContent(targetState = navigationToggle) {
         when(it) {
@@ -389,6 +408,7 @@ private fun NavigationLayout(
                     sendRemoteKeyReport = sendRemoteKeyReport,
                     sendKeyboardKeyReport = sendKeyboardKeyReport,
                     useEnterForSelection = remoteSettings.useEnterForSelection,
+                    modifier = if(isFullscreen) Modifier.fillMaxSize() else Modifier
                 )
             }
 
@@ -399,7 +419,8 @@ private fun NavigationLayout(
                     shouldInvertMouseScrollingDirection = remoteSettings.shouldInvertMouseScrollingDirection,
                     useGyroscope = remoteSettings.useGyroscope,
                     sendMouseInput = sendMouseKeyReport,
-                    modifier = Modifier
+                    isFullscreen = isFullscreen,
+                    modifier = if(isFullscreen) Modifier.fillMaxSize() else Modifier
                 )
             }
         }
@@ -411,21 +432,22 @@ private fun RemotePadLayout(
     remoteNavigationMode: RemoteNavigationEntity,
     sendRemoteKeyReport: (ByteArray) -> Unit,
     sendKeyboardKeyReport: (ByteArray) -> Unit,
-    useEnterForSelection: Boolean
+    useEnterForSelection: Boolean,
+    modifier: Modifier = Modifier
 ) {
     if(remoteNavigationMode == RemoteNavigationEntity.D_PAD) {
         RemoteDirectionalPadNavigation(
             sendRemoteKeyReport = sendRemoteKeyReport,
             sendKeyboardKeyReport = sendKeyboardKeyReport,
             useEnterForSelection = useEnterForSelection,
-            modifier = Modifier.aspectRatio(1f)
+            modifier = modifier.aspectRatio(1f)
         )
     } else {
         RemoteSwipeNavigation(
             sendRemoteKeyReport = sendRemoteKeyReport,
             sendKeyboardKeyReport = sendKeyboardKeyReport,
             useEnterForSelection = useEnterForSelection,
-            modifier = Modifier
+            modifier = modifier
         )
     }
 }
@@ -477,7 +499,9 @@ private fun TopBarActions(
     isMoreButtonsVisible: Boolean,
     onMoreButtonsVisibleChanged: (Boolean) -> Unit,
     isHelpBottomSheetVisible: Boolean,
-    onHelpBottomSheetVisibleChanged: (Boolean) -> Unit
+    onHelpBottomSheetVisibleChanged: (Boolean) -> Unit,
+    isFullscreen: Boolean,
+    onFullscreenChanged: (Boolean) -> Unit
 ) {
     FadeAnimatedContent(targetState = navigationToggle) {
         when (it) {
@@ -573,11 +597,14 @@ private fun TopBarActions(
             }
         )
 
-        // Fullscreen（占位，暂不实现）
+        // Fullscreen
         BasicDropdownMenuItem(
-            text = "全屏",
+            text = if(isFullscreen) "退出全屏" else "全屏",
             icon = AppIcons.Settings,
-            onClick = { /* TODO: fullscreen */ }
+            onClick = {
+                closeDropdownMenu()
+                onFullscreenChanged(!isFullscreen)
+            }
         )
 
         // Settings

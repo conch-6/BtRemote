@@ -1,10 +1,12 @@
 package com.atharok.btremote.ui.views.mouse
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
@@ -13,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -30,7 +33,8 @@ fun MousePadLayout(
     shouldInvertMouseScrollingDirection: Boolean,
     useGyroscope: Boolean,
     sendMouseInput: (MouseAction, Float, Float, Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFullscreen: Boolean = false
 ) {
     val mouseAction: Ref<MouseAction> = remember { Ref(MouseAction.NONE) }
 
@@ -43,58 +47,80 @@ fun MousePadLayout(
         )
     }
 
-    Column(modifier) {
-        Row(
-            modifier = Modifier
-                .weight(0.8f)
-                .padding(bottom = dimensionResource(id = R.dimen.padding_min))
-        ) {
-            MousePad(
-                mouseSpeed = mouseSpeed,
-                scrollSpeed = scrollSpeed,
-                sendMouseAction = {
-                    mouseAction.value = it
-                    sendMouseInput(mouseAction.value, 0f, 0f, 0f)
-                },
-                sendMousePosition = { x: Float, y: Float ->
-                    sendMouseInput(mouseAction.value, x, y, 0f)
-                },
-                sendMouseScroll = { wheel: Float ->
-                    val mouseWheel = wheel * if(shouldInvertMouseScrollingDirection) -1f else 1f
-                    sendMouseInput(mouseAction.value, 0f, 0f, mouseWheel)
-                },
-                shape = RoundedCornerShape(
-                    topStart = dimensionResource(id = R.dimen.card_corner_radius),
-                    topEnd = 0.dp,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp
-                ),
-                modifier = Modifier
-                    .weight(0.85f)
-                    .padding(end = dimensionResource(id = R.dimen.padding_min))
-            )
-
-            ScrollMouseButtonsLayout(
-                scrollSpeed = scrollSpeed,
-                sendMouseScroll = {
-                    sendMouseInput(mouseAction.value, 0f, 0f, it)
-                },
-                modifier = Modifier
-                    .weight(0.15f)
-                    .padding(start = dimensionResource(id = R.dimen.padding_min))
-            )
-        }
-
-        MouseButtonsLayout(
+    if(isFullscreen) {
+        // 全屏模式：触摸板占满整个空间
+        MousePad(
+            mouseSpeed = mouseSpeed,
+            scrollSpeed = scrollSpeed,
             sendMouseAction = {
                 mouseAction.value = it
                 sendMouseInput(mouseAction.value, 0f, 0f, 0f)
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.2f)
-                .padding(top = dimensionResource(id = R.dimen.padding_min))
+            sendMousePosition = { x: Float, y: Float ->
+                sendMouseInput(mouseAction.value, x, y, 0f)
+            },
+            sendMouseScroll = { wheel: Float ->
+                val mouseWheel = wheel * if(shouldInvertMouseScrollingDirection) -1f else 1f
+                sendMouseInput(mouseAction.value, 0f, 0f, mouseWheel)
+            },
+            shape = RoundedCornerShape(0.dp),
+            modifier = Modifier.fillMaxSize()
         )
+    } else {
+        // 普通模式：触摸板 + 按键 + 滚轮按钮
+        Column(modifier) {
+            Row(
+                modifier = Modifier
+                    .weight(0.8f)
+                    .padding(bottom = dimensionResource(id = R.dimen.padding_min))
+            ) {
+                MousePad(
+                    mouseSpeed = mouseSpeed,
+                    scrollSpeed = scrollSpeed,
+                    sendMouseAction = {
+                        mouseAction.value = it
+                        sendMouseInput(mouseAction.value, 0f, 0f, 0f)
+                    },
+                    sendMousePosition = { x: Float, y: Float ->
+                        sendMouseInput(mouseAction.value, x, y, 0f)
+                    },
+                    sendMouseScroll = { wheel: Float ->
+                        val mouseWheel = wheel * if(shouldInvertMouseScrollingDirection) -1f else 1f
+                        sendMouseInput(mouseAction.value, 0f, 0f, mouseWheel)
+                    },
+                    shape = RoundedCornerShape(
+                        topStart = dimensionResource(id = R.dimen.card_corner_radius),
+                        topEnd = 0.dp,
+                        bottomEnd = 0.dp,
+                        bottomStart = 0.dp
+                    ),
+                    modifier = Modifier
+                        .weight(0.85f)
+                        .padding(end = dimensionResource(id = R.dimen.padding_min))
+                )
+
+                ScrollMouseButtonsLayout(
+                    scrollSpeed = scrollSpeed,
+                    sendMouseScroll = {
+                        sendMouseInput(mouseAction.value, 0f, 0f, it)
+                    },
+                    modifier = Modifier
+                        .weight(0.15f)
+                        .padding(start = dimensionResource(id = R.dimen.padding_min))
+                )
+            }
+
+            MouseButtonsLayout(
+                sendMouseAction = {
+                    mouseAction.value = it
+                    sendMouseInput(mouseAction.value, 0f, 0f, 0f)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.2f)
+                    .padding(top = dimensionResource(id = R.dimen.padding_min))
+            )
+        }
     }
 }
 
