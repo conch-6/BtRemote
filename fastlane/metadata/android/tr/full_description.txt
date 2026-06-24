@@ -1,0 +1,15 @@
+Android TV'nizde kolayca gezinmek ve etkileşimde bulunmak için akıllı telefonunuzu Bluetooth uzaktan kumandaya dönüştürün.
+
+Özellikler:
+
+- Bluetooth bağlantısıyla kablosuz kontrol.
+- Cihazınızın uzaktan kontrolü için gerekli tüm düğmeleri içerir.
+- Entegre fare ve klavye desteği.
+- HID protokolü sayesinde Android TV cihazınıza ek uygulama kurulumu gerekmez.
+- Modern ve duyarlı kullanıcı arayüzü.
+- Kotlin, Jetpack Compose ve Material 3 ile geliştirildi.
+- Veri toplama olmadan gizlilik odaklı (internet izni devre dışı).
+- Reklam yok.
+- Açık kaynak.
+
+Kaynak kodu burada mevcuttur: https://gitlab.com/Atharok/BtRemote

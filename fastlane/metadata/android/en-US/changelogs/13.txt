@@ -1,0 +1,10 @@
+1.7.0
+
+Full list of changes here: https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Updated translations.
+- Improving the readability of the OLED black theme.
+- Added an option to integrate the advanced keyboard directly into the view.
+- Added a tile to launch the app from Quick Settings.
+- Code improvements.
+- Updated dependencies.

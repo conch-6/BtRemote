@@ -1,0 +1,9 @@
+1.7.1
+
+Liste complète des modifications : https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Ajout de la traduction en persan (merci à alr86).
+- Mise à jour des traductions.
+- Ajout de messages d’aide lorsque le profil HID n’a pas été initialisé.
+- Améliorations du code.
+- Mise à jour des dépendances.

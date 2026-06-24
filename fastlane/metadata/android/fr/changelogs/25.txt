@@ -1,0 +1,10 @@
+1.12.0
+
+Liste complète des modifications : https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Amélioration du pad de la souris.
+- Ajout d’une option dans les paramètres pour afficher ou masquer les boutons de la télécommande dans la notification (masqués par défaut).
+- Améliorations de la détection de l’état de la connexion.
+- Ajout de la disposition du clavier arabe.
+- Mise à jour des traductions.
+- Mise à jour des dépendances.

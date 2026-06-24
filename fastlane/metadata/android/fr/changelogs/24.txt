@@ -1,0 +1,8 @@
+1.11.0
+
+Liste complète des modifications : https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Ajout de la possibilité d'attribuer une action aux boutons volume physiques de l'appareil depuis les paramètres.
+- Amélioration de la détection de l'état du Bluetooth.
+- Mise à jour des dépendances.
+- Mise à jour des traductions.

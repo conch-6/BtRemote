@@ -1,0 +1,15 @@
+1.5.0
+
+Lista de cambios completa: https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Taducción al hebreo (gracias a Guy Lao).
+- Traducción al búlgaro (gracias a trunars).
+- Actualizadas las traducciones.
+- 2 métodos nuevos para emparejar dispositivos.
+- Conexión automática a un dispositivo al iniciar la aplicación.
+- Botón para desemparejar un dispositivo.
+- Panel táctil para la navegación por gestos.
+- Añadida una vista minimalista para la pantalla remota.
+- Mejoras varias.
+- Corrección de errores.
+- Dependencias actualizadas.

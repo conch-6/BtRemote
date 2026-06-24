@@ -1,0 +1,10 @@
+1.10.0
+
+Liste complète des modifications : https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Ajout de boutons supplémentaires.
+- Ajout d’une option pour activer la navigation à la souris par défaut (merci à vineet3996).
+- Corrections de bugs.
+- Améliorations du code.
+- Mise à jour des dépendances.
+- Mise à jour des traductions.

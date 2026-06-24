@@ -1,0 +1,7 @@
+1.10.1
+
+Liste complète des modifications : https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Quelques ajustements pour les langues s'écrivant de droite à gauche.
+- Mise à jour des dépendances.
+- Mise à jour des traductions.

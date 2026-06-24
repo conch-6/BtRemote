@@ -1,0 +1,6 @@
+1.12.1
+
+Full changelog here: https://gitlab.com/Atharok/BarcodeScanner/-/releases
+
+- Updated translations.
+- Updated dependencies.

@@ -1,0 +1,15 @@
+Lav din smartphone om til en Bluetooth fjernbetjening for at navigere og bruge dit Android TV.
+
+Funktioner:
+-Trådløs kontrol over Bluetooth forbindelse.
+-Har alle knapper du har brug for, for at styre dit apparat.
+-Support for integreret mus og tastatur.
+-Ingen yderligere app på dit Android TV, takket være HID protokollen.
+-Moderne og hurtig brugerflade.
+-Udviklet sammen med Kotlin, Jetpack Compose, and Material 3.
+-Privatliv i fokus, uden indsamling af data. (Internetadgang deaktiveret)
+-Ingen reklamer.
+- Open source.
+
+Kilde koden er tilgængelig her:
+https://gitlab.com/Atharok/BtRemote
