@@ -71,6 +71,8 @@ import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Usb
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.Watch
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.atharok.btremote.R
 import com.atharok.btremote.common.utils.icons.RoundPlayPause
 
 object AppIcons {
@@ -92,6 +94,11 @@ object AppIcons {
     val Lock get() = Icons.Rounded.Lock
     val Key get() = Icons.Rounded.Key
     val Favorite get() = Icons.Rounded.Favorite
+
+    // ---- Fullscreen ----
+
+    val Fullscreen get() = ImageVector.vectorResource(R.drawable.ic_fullscreen)
+    val FullscreenExit get() = ImageVector.vectorResource(R.drawable.ic_fullscreen_exit)
 
     // ---- Remote ----
 

@@ -558,6 +558,13 @@ private fun TopBarActions(
         )
     }
 
+    // Fullscreen
+    BasicIconButton(
+        onClick = { onFullscreenChanged(!isFullscreen) },
+        icon = if(isFullscreen) AppIcons.FullscreenExit else AppIcons.Fullscreen,
+        contentDescription = if(isFullscreen) "退出全屏" else "全屏"
+    )
+
     MoreOverflowMenu { closeDropdownMenu: () -> Unit ->
 
         // More Buttons
@@ -594,16 +601,6 @@ private fun TopBarActions(
             onClick = {
                 closeDropdownMenu()
                 onHelpBottomSheetVisibleChanged(!isHelpBottomSheetVisible)
-            }
-        )
-
-        // Fullscreen
-        BasicDropdownMenuItem(
-            text = if(isFullscreen) "退出全屏" else "全屏",
-            icon = AppIcons.Settings,
-            onClick = {
-                closeDropdownMenu()
-                onFullscreenChanged(!isFullscreen)
             }
         )
 
