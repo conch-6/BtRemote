@@ -33,6 +33,8 @@ import androidx.compose.material.icons.rounded.Dialpad
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FastRewind
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.HealthAndSafety
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Key
@@ -80,6 +82,8 @@ object AppIcons {
     val Back get() = Icons.AutoMirrored.Rounded.ArrowBack
     val Help get() = Icons.AutoMirrored.Rounded.HelpOutline
     val Settings get() = Icons.Rounded.Settings
+    val Fullscreen get() = Icons.Rounded.Fullscreen
+    val FullscreenExit get() = Icons.Rounded.FullscreenExit
     val Info get() = Icons.Outlined.Info
     val Refresh get() = Icons.Rounded.Refresh
     val MoreVert get() = Icons.Rounded.MoreVert
