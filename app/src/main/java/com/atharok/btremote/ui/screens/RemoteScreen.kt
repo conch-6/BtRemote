@@ -558,6 +558,27 @@ private fun TopBarActions(
         )
     }
 
+    // Fullscreen
+    FadeAnimatedContent(targetState = isFullscreen) {
+        when (it) {
+            true -> {
+                BasicIconButton(
+                    onClick = { onFullscreenChanged(false) },
+                    icon = AppIcons.FullscreenExit,
+                    contentDescription = stringResource(id = R.string.exit_full_screen)
+                )
+            }
+
+            false -> {
+                BasicIconButton(
+                    onClick = { onFullscreenChanged(true) },
+                    icon = AppIcons.Fullscreen,
+                    contentDescription = stringResource(id = R.string.full_screen)
+                )
+            }
+        }
+    }
+
     MoreOverflowMenu { closeDropdownMenu: () -> Unit ->
 
         // More Buttons
@@ -594,16 +615,6 @@ private fun TopBarActions(
             onClick = {
                 closeDropdownMenu()
                 onHelpBottomSheetVisibleChanged(!isHelpBottomSheetVisible)
-            }
-        )
-
-        // Fullscreen
-        BasicDropdownMenuItem(
-            text = if(isFullscreen) "退出全屏" else "全屏",
-            icon = AppIcons.Settings,
-            onClick = {
-                closeDropdownMenu()
-                onFullscreenChanged(!isFullscreen)
             }
         )
 
