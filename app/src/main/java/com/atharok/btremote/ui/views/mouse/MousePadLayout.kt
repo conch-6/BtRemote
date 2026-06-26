@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -49,7 +52,6 @@ fun MousePadLayout(
         Row(
             modifier = Modifier
                 .weight(0.8f)
-                .padding(bottom = dimensionResource(id = R.dimen.padding_min))
         ) {
             MousePad(
                 mouseSpeed = mouseSpeed,
@@ -77,7 +79,14 @@ fun MousePadLayout(
                 },
                 modifier = Modifier
                     .weight(0.85f)
-                    .padding(end = dimensionResource(id = R.dimen.padding_min))
+            )
+
+            VerticalDivider(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = dimensionResource(id = R.dimen.padding_min)),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outline
             )
 
             ScrollMouseButtonsLayout(
@@ -87,9 +96,16 @@ fun MousePadLayout(
                 },
                 modifier = Modifier
                     .weight(0.15f)
-                    .padding(start = dimensionResource(id = R.dimen.padding_min))
             )
         }
+
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = dimensionResource(id = R.dimen.padding_min)),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outline
+        )
 
         MouseButtonsLayout(
             sendMouseAction = {
@@ -99,7 +115,6 @@ fun MousePadLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.2f)
-                .padding(top = dimensionResource(id = R.dimen.padding_min))
         )
     }
 }
