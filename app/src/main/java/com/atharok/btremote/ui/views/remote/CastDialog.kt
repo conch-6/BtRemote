@@ -259,10 +259,9 @@ private fun CastDialogContent(
         MaterialButton(
             onClick = onCastClick,
             modifier = Modifier.fillMaxWidth(),
-            enabled = castSettings.links.isNotEmpty() && castSettings.selectedLinkId != null
-        ) {
-            TextNormal(text = stringResource(R.string.cast_screen))
-        }
+            enabled = castSettings.links.isNotEmpty() && castSettings.selectedLinkId != null,
+            text = stringResource(R.string.cast_screen)
+        )
     }
 }
 
