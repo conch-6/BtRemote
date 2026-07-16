@@ -47,7 +47,7 @@ class CastViewModel(
                 links = current.links + newLink,
                 selectedLinkId = current.selectedLinkId ?: newLink.id
             )
-            dataStoreRepository.saveCastSettings(updated)
+            saveSettings(updated)
         }
     }
 
@@ -63,7 +63,7 @@ class CastViewModel(
                     else -> current.selectedLinkId
                 }
             )
-            dataStoreRepository.saveCastSettings(updated)
+            saveSettings(updated)
         }
     }
 
@@ -71,8 +71,16 @@ class CastViewModel(
         viewModelScope.launch {
             val current = _castSettings.value
             if (current.selectedLinkId != linkId) {
-                dataStoreRepository.saveCastSettings(current.copy(selectedLinkId = linkId))
+                saveSettings(current.copy(selectedLinkId = linkId))
             }
+        }
+    }
+
+    private suspend fun saveSettings(settings: CastSettings) {
+        try {
+            dataStoreRepository.saveCastSettings(settings)
+        } catch (e: Exception) {
+            _castResult.value = CastResult.Error("保存设置失败：${e.localizedMessage}")
         }
     }
 
@@ -114,9 +122,7 @@ class CastViewModel(
                 ?: return@launch
 
             _discoveredDevices.value = emptyList()
-            dataStoreRepository.saveCastSettings(
-                settings.copy(savedDevice = CastDevice(device.name, device.controlUrl))
-            )
+            saveSettings(settings.copy(savedDevice = CastDevice(device.name, device.controlUrl)))
             castToDevice(device, selectedLink.url)
         }
     }
@@ -164,7 +170,7 @@ class CastViewModel(
     fun forgetSavedDevice() {
         viewModelScope.launch {
             val current = _castSettings.value
-            dataStoreRepository.saveCastSettings(current.copy(savedDevice = null))
+            saveSettings(current.copy(savedDevice = null))
         }
     }
 

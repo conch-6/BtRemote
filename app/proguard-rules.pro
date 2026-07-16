@@ -19,3 +19,13 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Cast / DLNA serialization
+-keepclassmembers class com.atharok.btremote.domain.entities.settings.CastSettings, com.atharok.btremote.domain.entities.settings.CastLink, com.atharok.btremote.domain.entities.settings.CastDevice, com.atharok.btremote.domain.entity.dlna.DlnaDevice {
+    <init>(...);
+    *** *;
+}
+-keep class com.atharok.btremote.domain.entities.settings.CastSettings$* { *; }
+-keep class com.atharok.btremote.domain.entities.settings.CastLink$* { *; }
+-keep class com.atharok.btremote.domain.entities.settings.CastDevice$* { *; }
+-keep class com.atharok.btremote.domain.entity.dlna.DlnaDevice$* { *; }
