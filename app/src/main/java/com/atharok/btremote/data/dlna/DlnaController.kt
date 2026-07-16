@@ -124,7 +124,7 @@ class DlnaController {
     }
 
     private fun parseHeaderValue(response: String, headerName: String): String? {
-        val regex = Regex("$headerName:\s*(.+)", RegexOption.IGNORE_CASE)
+        val regex = Regex("$headerName:\\s*(.+)", RegexOption.IGNORE_CASE)
         return regex.find(response)?.groupValues?.get(1)?.trim()
     }
 

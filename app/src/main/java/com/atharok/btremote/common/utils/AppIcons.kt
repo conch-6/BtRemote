@@ -93,6 +93,7 @@ object AppIcons {
     //val Done get() = Icons.Rounded.Done
     val Appearance get() = Icons.Rounded.Palette
     //val UserInterface get() = Icons.Rounded.ViewCompact
+    val Add get() = Icons.Rounded.Add
     val Cast get() = Icons.Rounded.Cast
     val OpenInBrowser get() = Icons.Rounded.OpenInBrowser
     val Lock get() = Icons.Rounded.Lock
