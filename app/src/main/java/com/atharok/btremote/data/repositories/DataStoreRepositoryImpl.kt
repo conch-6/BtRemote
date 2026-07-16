@@ -5,6 +5,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.CastSettings
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 import com.atharok.btremote.domain.repositories.DataStoreRepository
@@ -116,5 +117,12 @@ class DataStoreRepositoryImpl(
     override fun hideBluetoothActivationButton(): Flow<Boolean> = settingsDataStore.hideBluetoothActivationButtonFlow
     override suspend fun saveHideBluetoothActivationButton(hide: Boolean) {
         settingsDataStore.saveHideBluetoothActivationButton(hide)
+    }
+
+    // ---- Cast ----
+
+    override fun getCastSettings(): Flow<CastSettings> = settingsDataStore.castSettingsFlow
+    override suspend fun saveCastSettings(castSettings: CastSettings) {
+        settingsDataStore.saveCastSettings(castSettings)
     }
 }

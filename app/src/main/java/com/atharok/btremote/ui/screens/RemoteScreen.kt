@@ -61,6 +61,7 @@ import com.atharok.btremote.ui.views.keyboard.AdvancedKeyboard
 import com.atharok.btremote.ui.views.keyboard.AdvancedKeyboardModalBottomSheet
 import com.atharok.btremote.ui.views.keyboard.VirtualKeyboardModalBottomSheet
 import com.atharok.btremote.ui.views.mouse.MousePadLayout
+import com.atharok.btremote.ui.views.remote.CastDialog
 import com.atharok.btremote.ui.views.remote.MinimalistRemoteView
 import com.atharok.btremote.ui.views.remote.MoreButtonsDialog
 import com.atharok.btremote.ui.views.remote.RemoteView
@@ -97,6 +98,9 @@ fun RemoteScreen(
     // More Buttons
     var isMoreButtonsVisible: Boolean by rememberSaveable { mutableStateOf(false) }
 
+    // Cast
+    var isCastDialogVisible: Boolean by rememberSaveable { mutableStateOf(false) }
+
     // Help
     var isHelpBottomSheetVisible: Boolean by remember { mutableStateOf(false) }
 
@@ -127,6 +131,8 @@ fun RemoteScreen(
                 onKeyboardVisibleChanged = { isKeyboardVisible = it },
                 isMoreButtonsVisible = isMoreButtonsVisible,
                 onMoreButtonsVisibleChanged = { isMoreButtonsVisible = it },
+                isCastDialogVisible = isCastDialogVisible,
+                onCastDialogVisibleChanged = { isCastDialogVisible = it },
                 isHelpBottomSheetVisible = isHelpBottomSheetVisible,
                 onHelpBottomSheetVisibleChanged = { isHelpBottomSheetVisible = it },
                 isFullscreen = isFullscreen,
@@ -188,6 +194,11 @@ fun RemoteScreen(
                         sendRemoteKeyReport = remoteViewModel.sendRemoteReport,
                         sendKeyboardKeyReport = remoteViewModel.sendKeyboardReport,
                         onDismissRequest = { isMoreButtonsVisible = false }
+                    )
+                }
+                isCastDialogVisible -> {
+                    CastDialog(
+                        onDismissRequest = { isCastDialogVisible = false }
                     )
                 }
             }
@@ -498,6 +509,8 @@ private fun TopBarActions(
     onKeyboardVisibleChanged: (Boolean) -> Unit,
     isMoreButtonsVisible: Boolean,
     onMoreButtonsVisibleChanged: (Boolean) -> Unit,
+    isCastDialogVisible: Boolean,
+    onCastDialogVisibleChanged: (Boolean) -> Unit,
     isHelpBottomSheetVisible: Boolean,
     onHelpBottomSheetVisibleChanged: (Boolean) -> Unit,
     isFullscreen: Boolean,
@@ -598,6 +611,16 @@ private fun TopBarActions(
             onClick = {
                 closeDropdownMenu()
                 disconnectDevice()
+            }
+        )
+
+        // Cast
+        BasicDropdownMenuItem(
+            text = stringResource(id = R.string.cast_screen),
+            icon = AppIcons.Cast,
+            onClick = {
+                closeDropdownMenu()
+                onCastDialogVisibleChanged(!isCastDialogVisible)
             }
         )
 

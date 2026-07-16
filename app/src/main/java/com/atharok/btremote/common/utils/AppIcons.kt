@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothDisabled
 import androidx.compose.material.icons.rounded.BrightnessHigh
 import androidx.compose.material.icons.rounded.BrightnessLow
+import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.Computer
@@ -92,6 +93,7 @@ object AppIcons {
     //val Done get() = Icons.Rounded.Done
     val Appearance get() = Icons.Rounded.Palette
     //val UserInterface get() = Icons.Rounded.ViewCompact
+    val Cast get() = Icons.Rounded.Cast
     val OpenInBrowser get() = Icons.Rounded.OpenInBrowser
     val Lock get() = Icons.Rounded.Lock
     val Key get() = Icons.Rounded.Key

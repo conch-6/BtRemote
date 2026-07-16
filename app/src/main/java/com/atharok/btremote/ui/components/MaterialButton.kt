@@ -23,12 +23,14 @@ import com.atharok.btremote.R
 fun MaterialButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     text: String = "",
     icon: ImageVector? = null
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
+        modifier = modifier,
+        enabled = enabled
     ) {
         ButtonContent(
             text = text,

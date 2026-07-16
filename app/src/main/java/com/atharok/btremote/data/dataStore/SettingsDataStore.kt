@@ -28,6 +28,7 @@ import com.atharok.btremote.domain.entities.RemoteNavigationEntity
 import com.atharok.btremote.domain.entities.remoteInput.PhysicalVolumeButtonAction
 import com.atharok.btremote.domain.entities.remoteInput.keyboard.KeyboardLanguage
 import com.atharok.btremote.domain.entities.settings.AppearanceSettings
+import com.atharok.btremote.domain.entities.settings.CastSettings
 import com.atharok.btremote.domain.entities.settings.RemoteSettings
 import com.atharok.btremote.domain.entities.settings.ThemeEntity
 import kotlinx.coroutines.flow.Flow
@@ -63,6 +64,8 @@ class SettingsDataStore(private val context: Context) {
         private const val AUTO_CONNECT_DEVICE_ADDRESS_KEY = "auto_connect_device_address_key"
         private const val SHOW_REMOTE_BUTTONS_IN_NOTIFICATION_KEY = "show_remote_buttons_in_notification_key"
         private const val HIDE_BLUETOOTH_ACTIVATION_BUTTON_KEY = "hide_bluetooth_activation_button_key"
+
+        private const val CAST_SETTINGS_KEY = "cast_settings_key"
     }
 
     private val themeKey = stringPreferencesKey(THEME_KEY)
@@ -87,6 +90,7 @@ class SettingsDataStore(private val context: Context) {
     private val autoConnectDeviceAddressKey = stringPreferencesKey(AUTO_CONNECT_DEVICE_ADDRESS_KEY)
     private val showRemoteButtonsInNotificationKey = booleanPreferencesKey(SHOW_REMOTE_BUTTONS_IN_NOTIFICATION_KEY)
     private val hideBluetoothActivationButtonKey = booleanPreferencesKey(HIDE_BLUETOOTH_ACTIVATION_BUTTON_KEY)
+    private val castSettingsKey = stringPreferencesKey(CAST_SETTINGS_KEY)
 
     private fun Flow<Preferences>.catchException(): Flow<Preferences> = this.catch {
         if (it is IOException) {
@@ -331,6 +335,30 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveHideBluetoothActivationButton(hide: Boolean) {
         context.dataStore.edit {
             it[hideBluetoothActivationButtonKey] = hide
+        }
+    }
+
+    // ---- Cast ----
+
+    val castSettingsFlow: Flow<CastSettings> = context.dataStore.data
+        .catchException()
+        .map { preferences ->
+            val jsonString: String? = preferences[castSettingsKey]
+            if (jsonString == null) {
+                CastSettings()
+            } else {
+                try {
+                    Json.decodeFromString(jsonString)
+                } catch (_: Exception) {
+                    CastSettings()
+                }
+            }
+        }
+
+    suspend fun saveCastSettings(castSettings: CastSettings) {
+        val jsonString = Json.encodeToString(castSettings)
+        context.dataStore.edit {
+            it[castSettingsKey] = jsonString
         }
     }
 }
