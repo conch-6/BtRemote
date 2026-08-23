@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.atharok.btremote"
+    namespace = "com.btremote.teny"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.atharok.btremote"
+        applicationId = "com.btremote.teny"
         minSdk = 28
         targetSdk = 37
         versionCode = 27

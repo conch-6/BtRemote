@@ -11,8 +11,8 @@
 <div align="center"><h4>An Android app that turns your smartphone into a Bluetooth remote for Android TV.</h4></div>
 
 <div align="center">
-    <a href="https://f-droid.org/packages/com.atharok.btremote/" target="_blank"><img src="assets/get-it-on-f-droid-badge.png" alt="Get it on F-Droid" height="90"></a>
-    <a href="https://play.google.com/store/apps/details?id=com.atharok.btremote.gplay" target="_blank"><img src="assets/get-it-on-google-play-badge.png" alt="Get it on Google Play" height="90"></a>
+    <a href="https://f-droid.org/packages/com.btremote.teny/" target="_blank"><img src="assets/get-it-on-f-droid-badge.png" alt="Get it on F-Droid" height="90"></a>
+    <a href="https://play.google.com/store/apps/details?id=com.btremote.teny.gplay" target="_blank"><img src="assets/get-it-on-google-play-badge.png" alt="Get it on Google Play" height="90"></a>
 </div>
 
 You may also download the APK directly from [GitLab](https://gitlab.com/Atharok/BtRemote/-/releases).

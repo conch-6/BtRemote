@@ -21,11 +21,11 @@
 #-renamesourcefileattribute SourceFile
 
 # Cast / DLNA serialization
--keepclassmembers class com.atharok.btremote.domain.entities.settings.CastSettings, com.atharok.btremote.domain.entities.settings.CastLink, com.atharok.btremote.domain.entities.settings.CastDevice, com.atharok.btremote.domain.entity.dlna.DlnaDevice {
+-keepclassmembers class com.btremote.teny.domain.entities.settings.CastSettings, com.btremote.teny.domain.entities.settings.CastLink, com.btremote.teny.domain.entities.settings.CastDevice, com.btremote.teny.domain.entity.dlna.DlnaDevice {
     <init>(...);
     *** *;
 }
--keep class com.atharok.btremote.domain.entities.settings.CastSettings$* { *; }
--keep class com.atharok.btremote.domain.entities.settings.CastLink$* { *; }
--keep class com.atharok.btremote.domain.entities.settings.CastDevice$* { *; }
--keep class com.atharok.btremote.domain.entity.dlna.DlnaDevice$* { *; }
+-keep class com.btremote.teny.domain.entities.settings.CastSettings$* { *; }
+-keep class com.btremote.teny.domain.entities.settings.CastLink$* { *; }
+-keep class com.btremote.teny.domain.entities.settings.CastDevice$* { *; }
+-keep class com.btremote.teny.domain.entity.dlna.DlnaDevice$* { *; }
