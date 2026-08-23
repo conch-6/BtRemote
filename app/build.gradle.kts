@@ -5,17 +5,17 @@ plugins {
 }
 
 android {
-    namespace = "com.atharok.btremote"
+    namespace = "com.btremote.teny"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.atharok.btremote"
+        applicationId = "com.btremote.teny"
         minSdk = 28
-        targetSdk = 36
-        versionCode = 26
-        versionName = "1.12.1"
+        targetSdk = 37
+        versionCode = 27
+        versionName = "1.13.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -62,8 +62,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {

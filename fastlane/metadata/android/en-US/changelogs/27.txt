@@ -1,0 +1,9 @@
+1.13.0
+
+Full list of changes here: https://gitlab.com/Atharok/BtRemote/-/releases
+
+- Added navigation buttons to the Widget.
+- Added support for navigation using a game controller’s physical buttons. This is particularly useful for Android-based game consoles.
+- Fixed an issue where the "Use the Enter key for selection" option was not applied when clicking the notification button.
+- Updated translations.
+- Updated Android SDK (API 36 → API 37) and dependencies.

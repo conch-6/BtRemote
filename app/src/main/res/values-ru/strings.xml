@@ -8,7 +8,7 @@
         If you choose to translate it, ensure that the name is 11 characters or fewer if possible.
         If the text exceeds 11 characters, it's not a problem, but it may not display entirely in all launchers.
     -->
-    <string name="app_name">Пульт ДУ по Bluetooth</string>
+    <string name="app_name">Пульт ДУ по BT</string>
     <string name="close">Закрыть</string>
     <string name="error">Ошибка</string>
     <!-- Bluetooth Support -->

@@ -24,7 +24,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools build-tools;36.0.0 platforms;android-36'
+          packages: 'platform-tools build-tools;37.0.0 platforms;android-37.1'
 
       # 1. 还原签名文件到云端临时目录
       - name: Decode Keystore
