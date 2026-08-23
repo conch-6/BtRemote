@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothDisabled
 import androidx.compose.material.icons.rounded.BrightnessHigh
 import androidx.compose.material.icons.rounded.BrightnessLow
+import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.Computer
@@ -33,6 +34,8 @@ import androidx.compose.material.icons.rounded.Dialpad
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FastRewind
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.HealthAndSafety
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Key
@@ -80,6 +83,8 @@ object AppIcons {
     val Back get() = Icons.AutoMirrored.Rounded.ArrowBack
     val Help get() = Icons.AutoMirrored.Rounded.HelpOutline
     val Settings get() = Icons.Rounded.Settings
+    val Fullscreen get() = Icons.Rounded.Fullscreen
+    val FullscreenExit get() = Icons.Rounded.FullscreenExit
     val Info get() = Icons.Outlined.Info
     val Refresh get() = Icons.Rounded.Refresh
     val MoreVert get() = Icons.Rounded.MoreVert
@@ -88,6 +93,8 @@ object AppIcons {
     //val Done get() = Icons.Rounded.Done
     val Appearance get() = Icons.Rounded.Palette
     //val UserInterface get() = Icons.Rounded.ViewCompact
+    val Add get() = Icons.Rounded.Add
+    val Cast get() = Icons.Rounded.Cast
     val OpenInBrowser get() = Icons.Rounded.OpenInBrowser
     val Lock get() = Icons.Rounded.Lock
     val Key get() = Icons.Rounded.Key

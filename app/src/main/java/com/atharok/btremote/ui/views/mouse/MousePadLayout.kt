@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -30,7 +34,8 @@ fun MousePadLayout(
     shouldInvertMouseScrollingDirection: Boolean,
     useGyroscope: Boolean,
     sendMouseInput: (MouseAction, Float, Float, Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFullscreen: Boolean = false
 ) {
     val mouseAction: Ref<MouseAction> = remember { Ref(MouseAction.NONE) }
 
@@ -47,7 +52,6 @@ fun MousePadLayout(
         Row(
             modifier = Modifier
                 .weight(0.8f)
-                .padding(bottom = dimensionResource(id = R.dimen.padding_min))
         ) {
             MousePad(
                 mouseSpeed = mouseSpeed,
@@ -63,15 +67,26 @@ fun MousePadLayout(
                     val mouseWheel = wheel * if(shouldInvertMouseScrollingDirection) -1f else 1f
                     sendMouseInput(mouseAction.value, 0f, 0f, mouseWheel)
                 },
-                shape = RoundedCornerShape(
-                    topStart = dimensionResource(id = R.dimen.card_corner_radius),
-                    topEnd = 0.dp,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp
-                ),
+                shape = if(isFullscreen) {
+                    RoundedCornerShape(0.dp)
+                } else {
+                    RoundedCornerShape(
+                        topStart = dimensionResource(id = R.dimen.card_corner_radius),
+                        topEnd = 0.dp,
+                        bottomEnd = 0.dp,
+                        bottomStart = 0.dp
+                    )
+                },
                 modifier = Modifier
                     .weight(0.85f)
-                    .padding(end = dimensionResource(id = R.dimen.padding_min))
+            )
+
+            VerticalDivider(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = dimensionResource(id = R.dimen.padding_min)),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outline
             )
 
             ScrollMouseButtonsLayout(
@@ -81,9 +96,16 @@ fun MousePadLayout(
                 },
                 modifier = Modifier
                     .weight(0.15f)
-                    .padding(start = dimensionResource(id = R.dimen.padding_min))
             )
         }
+
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = dimensionResource(id = R.dimen.padding_min)),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outline
+        )
 
         MouseButtonsLayout(
             sendMouseAction = {
@@ -93,7 +115,6 @@ fun MousePadLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.2f)
-                .padding(top = dimensionResource(id = R.dimen.padding_min))
         )
     }
 }

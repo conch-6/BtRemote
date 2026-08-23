@@ -62,8 +62,10 @@ import com.atharok.btremote.domain.usecases.DeviceSelectionUseCase
 import com.atharok.btremote.domain.usecases.GyroscopeSensorUseCase
 import com.atharok.btremote.domain.usecases.RemoteUseCase
 import com.atharok.btremote.domain.usecases.SettingsUseCase
+import com.atharok.btremote.data.dlna.DlnaController
 import com.atharok.btremote.presentation.viewmodel.AppScopeViewModel
 import com.atharok.btremote.presentation.viewmodel.BluetoothActivationViewModel
+import com.atharok.btremote.presentation.viewmodel.CastViewModel
 import com.atharok.btremote.presentation.viewmodel.DeviceDiscoveryViewModel
 import com.atharok.btremote.presentation.viewmodel.DeviceSelectionViewModel
 import com.atharok.btremote.presentation.viewmodel.GyroscopeSensorViewModel
@@ -185,6 +187,13 @@ private val viewModelModule: Module = module {
             useCase = get<RemoteUseCase>()
         )
     }
+
+    viewModel {
+        CastViewModel(
+            dataStoreRepository = get<DataStoreRepository>(),
+            dlnaController = get<DlnaController>()
+        )
+    }
 }
 
 private val useCaseModule: Module = module {
@@ -304,5 +313,9 @@ private val dataModule: Module = module {
         SettingsDataStore(
             context = androidContext()
         )
+    }
+
+    single {
+        DlnaController()
     }
 }
