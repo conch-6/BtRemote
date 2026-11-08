@@ -20,10 +20,8 @@ import com.btremote.teny.domain.entities.remoteInput.MouseAction
 import com.btremote.teny.ui.components.DefaultElevatedCard
 
 // A single HID mouse report carries 8-bit signed relative values (-127..127), so drag
-// deltas are capped to that range and the cursor re-centering move is split into chunks
-// that each fit into one report.
+// deltas are capped to that range.
 private const val HID_RELATIVE_MAX = 127f
-private const val READING_RETURN_STEP = 100f
 
 @Composable
 fun MousePad(
@@ -41,12 +39,8 @@ fun MousePad(
     val tapAccumulatedDrift = remember { Ref(0f) }
     val scrollAccumulator = remember { Ref(0f) }
 
-    // Reading mode keeps the cursor close to where each swipe began so it can never
-    // drift into a screen edge and stop scrolling halfway through a page.
     val readingDragActive = remember { Ref(false) }
     val readingDrift = remember { Ref(0f) }
-    val readingAccX = remember { Ref(0f) }
-    val readingAccY = remember { Ref(0f) }
 
     DefaultElevatedCard(
         modifier = modifier,
@@ -60,8 +54,6 @@ fun MousePad(
                         awaitFirstDown()
                         readingDragActive.value = false
                         readingDrift.value = 0f
-                        readingAccX.value = 0f
-                        readingAccY.value = 0f
                         try {
                             while (true) {
                                 val event = awaitPointerEvent()
@@ -73,8 +65,6 @@ fun MousePad(
                                         inputChanges = inputChanges,
                                         dragActive = readingDragActive,
                                         drift = readingDrift,
-                                        accX = readingAccX,
-                                        accY = readingAccY,
                                         sendMouseAction = sendMouseAction,
                                         sendMousePosition = sendMousePosition
                                     )
@@ -111,10 +101,7 @@ fun MousePad(
                             // If a gesture was interrupted before a clean lift, never leave the
                             // left button held down on the controlled device.
                             if (readingDragActive.value) {
-                                finishReadingDrag(
-                                    readingDragActive, readingDrift, readingAccX, readingAccY,
-                                    sendMouseAction, sendMousePosition
-                                )
+                                finishReadingDrag(readingDragActive, readingDrift, sendMouseAction)
                             }
                         }
                     }
@@ -223,24 +210,21 @@ private fun doWheel(
  * tap stays a normal click, because doTap still decides taps and its drift stays under
  * the tap threshold.
  *
- * When the finger lifts (or a second finger joins), the button is released FIRST and then
- * the accumulated displacement is sent back with the button up. A button-up mouse move
- * only repositions the cursor and does NOT scroll, so the cursor returns to roughly where
- * the swipe began: every swipe starts from the same spot and never runs into a screen edge.
+ * On lift the button is simply released. The cursor is NOT moved back on purpose: sending
+ * a reversed move after releasing the button made the cursor fly in the opposite direction
+ * on some hosts, so no reset move is sent at all.
  */
 private fun doReadingScroll(
     mouseSpeed: Float,
     inputChanges: List<PointerInputChange>,
     dragActive: Ref<Boolean>,
     drift: Ref<Float>,
-    accX: Ref<Float>,
-    accY: Ref<Float>,
     sendMouseAction: (MouseAction) -> Unit,
     sendMousePosition: (Float, Float) -> Unit
 ) {
     // Multi-finger gestures keep their original handling (doTap / doWheel).
     if (inputChanges.size != 1) {
-        finishReadingDrag(dragActive, drift, accX, accY, sendMouseAction, sendMousePosition)
+        finishReadingDrag(dragActive, drift, sendMouseAction)
         return
     }
 
@@ -252,8 +236,8 @@ private fun doReadingScroll(
     if (change.changedToDown()) return
 
     if (!change.pressed) {
-        // Finger lifted: end the drag (or simply reset state when it stayed a tap).
-        finishReadingDrag(dragActive, drift, accX, accY, sendMouseAction, sendMousePosition)
+        // Finger lifted: release the button (or simply reset state when it stayed a tap).
+        finishReadingDrag(dragActive, drift, sendMouseAction)
         return
     }
 
@@ -272,35 +256,18 @@ private fun doReadingScroll(
     val dy = (delta.y * mouseSpeed).coerceIn(-HID_RELATIVE_MAX, HID_RELATIVE_MAX)
     if (dx != 0f || dy != 0f) {
         sendMousePosition(dx, dy)
-        accX.value += dx
-        accY.value += dy
     }
 }
 
 private fun finishReadingDrag(
     dragActive: Ref<Boolean>,
     drift: Ref<Float>,
-    accX: Ref<Float>,
-    accY: Ref<Float>,
-    sendMouseAction: (MouseAction) -> Unit,
-    sendMousePosition: (Float, Float) -> Unit
+    sendMouseAction: (MouseAction) -> Unit
 ) {
     if (dragActive.value) {
-        // Release the button before re-centering, so the return move does not scroll.
+        // Release the button. No reversed cursor move is sent (see doReadingScroll docs).
         sendMouseAction(MouseAction.NONE)
-
-        var remainingX = accX.value
-        var remainingY = accY.value
-        while (remainingX != 0f || remainingY != 0f) {
-            val stepX = remainingX.coerceIn(-READING_RETURN_STEP, READING_RETURN_STEP)
-            val stepY = remainingY.coerceIn(-READING_RETURN_STEP, READING_RETURN_STEP)
-            sendMousePosition(-stepX, -stepY)
-            remainingX -= stepX
-            remainingY -= stepY
-        }
         dragActive.value = false
     }
     drift.value = 0f
-    accX.value = 0f
-    accY.value = 0f
 }

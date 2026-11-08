@@ -15,6 +15,10 @@ class RemoteUseCase(
 
     val remoteSettingsFlow: Flow<RemoteSettings> get() = dataStoreRepository.remoteSettingsFlow
 
+    suspend fun saveUseReadingMode(useReadingMode: Boolean) {
+        dataStoreRepository.saveUseReadingMode(useReadingMode)
+    }
+
     // ---- Connection ----
 
     fun disconnectDevice(): Boolean {

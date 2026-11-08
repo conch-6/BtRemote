@@ -23,6 +23,10 @@ class RemoteViewModel(
 
     val remoteSettingsFlow: Flow<RemoteSettings> = useCase.remoteSettingsFlow
 
+    fun saveUseReadingMode(useReadingMode: Boolean) = viewModelScope.launch {
+        useCase.saveUseReadingMode(useReadingMode)
+    }
+
     // ---- Connection ----
 
     fun disconnectDevice(): Boolean = useCase.disconnectDevice()

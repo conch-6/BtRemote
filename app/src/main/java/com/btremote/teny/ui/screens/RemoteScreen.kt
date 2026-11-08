@@ -133,6 +133,8 @@ fun RemoteScreen(
                 },
                 navigationToggle = navigationToggle,
                 onNavigationToggleChanged = { navigationToggle = it },
+                useReadingMode = remoteSettings.useReadingMode,
+                onUseReadingModeChanged = { remoteViewModel.saveUseReadingMode(it) },
                 useAdvancedKeyboardIntegrated = remoteSettings.useAdvancedKeyboard && remoteSettings.useAdvancedKeyboardIntegrated,
                 isKeyboardVisible = isKeyboardVisible,
                 onKeyboardVisibleChanged = { isKeyboardVisible = it },
@@ -550,6 +552,8 @@ private fun TopBarActions(
     disconnectDevice: () -> Unit,
     navigationToggle: NavigationToggle,
     onNavigationToggleChanged: (NavigationToggle) -> Unit,
+    useReadingMode: Boolean,
+    onUseReadingModeChanged: (Boolean) -> Unit,
     useAdvancedKeyboardIntegrated: Boolean,
     isKeyboardVisible: Boolean,
     onKeyboardVisibleChanged: (Boolean) -> Unit,
@@ -583,6 +587,18 @@ private fun TopBarActions(
                     contentDescription = stringResource(id = R.string.mouse),
                 )
             }
+        }
+    }
+
+    // Reading page-turn mode toggle: only relevant while the mouse/touchpad is shown.
+    // Hollow circle = off, solid circle = on.
+    if (navigationToggle == NavigationToggle.MOUSE) {
+        FadeAnimatedContent(targetState = useReadingMode) {
+            BasicIconButton(
+                onClick = { onUseReadingModeChanged(!useReadingMode) },
+                icon = if (it) AppIcons.Round else AppIcons.Pick,
+                contentDescription = stringResource(id = R.string.use_reading_mode),
+            )
         }
     }
 
