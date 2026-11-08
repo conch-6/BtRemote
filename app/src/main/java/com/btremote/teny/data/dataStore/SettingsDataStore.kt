@@ -22,6 +22,7 @@ import com.btremote.teny.common.utils.DEFAULT_USE_ENTER_FOR_SELECTION
 import com.btremote.teny.common.utils.DEFAULT_USE_FULL_SCREEN
 import com.btremote.teny.common.utils.DEFAULT_USE_GYROSCOPE
 import com.btremote.teny.common.utils.DEFAULT_USE_MINIMALIST_REMOTE
+import com.btremote.teny.common.utils.DEFAULT_USE_READING_MODE
 import com.btremote.teny.common.utils.USE_MOUSE_NAVIGATION_BY_DEFAULT
 import com.btremote.teny.common.utils.isDynamicColorsAvailable
 import com.btremote.teny.domain.entities.RemoteNavigationEntity
@@ -49,6 +50,7 @@ class SettingsDataStore(private val context: Context) {
         private const val MOUSE_SCROLL_SPEED_KEY = "mouse_scroll_speed_key"
         private const val INVERT_MOUSE_SCROLLING_DIRECTION_KEY = "invert_mouse_scrolling_direction_key"
         private const val USE_GYROSCOPE_KEY = "use_gyroscope_key"
+        private const val USE_READING_MODE_KEY = "use_reading_mode_key"
         private const val KEYBOARD_LANGUAGE = "keyboard_language"
         private const val MUST_CLEAR_INPUT_FIELD_KEY = "must_clear_input_field_key"
         private const val USE_ADVANCED_KEYBOARD_KEY = "use_advanced_keyboard_key"
@@ -76,6 +78,7 @@ class SettingsDataStore(private val context: Context) {
     private val mouseScrollSpeedKey = floatPreferencesKey(MOUSE_SCROLL_SPEED_KEY)
     private val invertMouseScrollingDirectionKey = booleanPreferencesKey(INVERT_MOUSE_SCROLLING_DIRECTION_KEY)
     private val useGyroscopeKey = booleanPreferencesKey(USE_GYROSCOPE_KEY)
+    private val useReadingModeKey = booleanPreferencesKey(USE_READING_MODE_KEY)
     private val keyboardLanguageKey = stringPreferencesKey(KEYBOARD_LANGUAGE)
     private val mustClearInputFieldKey = booleanPreferencesKey(MUST_CLEAR_INPUT_FIELD_KEY)
     private val useAdvancedKeyboardKey = booleanPreferencesKey(USE_ADVANCED_KEYBOARD_KEY)
@@ -153,6 +156,7 @@ class SettingsDataStore(private val context: Context) {
                 mouseScrollSpeed = preferences[mouseScrollSpeedKey] ?: DEFAULT_MOUSE_SCROLL_SPEED,
                 shouldInvertMouseScrollingDirection = preferences[invertMouseScrollingDirectionKey] ?: DEFAULT_SHOULD_INVERT_MOUSE_SCROLLING_DIRECTION,
                 useGyroscope = preferences[useGyroscopeKey] ?: DEFAULT_USE_GYROSCOPE,
+                useReadingMode = preferences[useReadingModeKey] ?: DEFAULT_USE_READING_MODE,
 
                 // ---- Keyboard ----
                 keyboardLanguage = try {
@@ -209,6 +213,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveUseGyroscope(useGyroscope: Boolean) {
         context.dataStore.edit {
             it[useGyroscopeKey] = useGyroscope
+        }
+    }
+
+    suspend fun saveUseReadingMode(useReadingMode: Boolean) {
+        context.dataStore.edit {
+            it[useReadingModeKey] = useReadingMode
         }
     }
 

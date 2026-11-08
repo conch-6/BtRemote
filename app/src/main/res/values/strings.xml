@@ -134,6 +134,8 @@
     <string name="mouse_scroll_speed">Scroll speed</string>
     <string name="invert_mouse_scrolling_direction">Invert the scrolling direction</string>
     <string name="use_the_gyroscope_to_control_the_mouse">Use the gyroscope to control the mouse</string>
+    <string name="use_reading_mode">Reading page-turn mode</string>
+    <string name="use_reading_mode_info">Swipe on the touchpad to scroll smoothly without holding the left button</string>
     <string name="keyboard_and_input_field">Keyboard and input field</string>
     <string name="clear_input_field">Clear input field after sending text</string>
     <string name="integrate_advanced_keyboard_into_the_view">Integrate the advanced keyboard into the view</string>

@@ -33,6 +33,7 @@ fun MousePadLayout(
     scrollSpeed: Float,
     shouldInvertMouseScrollingDirection: Boolean,
     useGyroscope: Boolean,
+    useReadingMode: Boolean,
     sendMouseInput: (MouseAction, Float, Float, Float) -> Unit,
     modifier: Modifier = Modifier,
     isFullscreen: Boolean = false
@@ -56,6 +57,7 @@ fun MousePadLayout(
             MousePad(
                 mouseSpeed = mouseSpeed,
                 scrollSpeed = scrollSpeed,
+                useReadingMode = useReadingMode,
                 sendMouseAction = {
                     mouseAction.value = it
                     sendMouseInput(mouseAction.value, 0f, 0f, 0f)

@@ -53,6 +53,10 @@ class SettingsUseCase(private val dataStoreRepository: DataStoreRepository) {
         dataStoreRepository.saveUseGyroscope(useGyroscope)
     }
 
+    suspend fun saveUseReadingMode(useReadingMode: Boolean) {
+        dataStoreRepository.saveUseReadingMode(useReadingMode)
+    }
+
     suspend fun saveKeyboardLanguage(language: KeyboardLanguage) {
         dataStoreRepository.saveKeyboardLanguage(language)
     }

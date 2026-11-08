@@ -35,6 +35,8 @@ interface DataStoreRepository {
 
     suspend fun saveUseGyroscope(useGyroscope: Boolean)
 
+    suspend fun saveUseReadingMode(useReadingMode: Boolean)
+
     suspend fun saveKeyboardLanguage(language: KeyboardLanguage)
 
     suspend fun saveMustClearInputField(mustClearInputField: Boolean)

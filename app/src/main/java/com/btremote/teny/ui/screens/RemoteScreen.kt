@@ -474,6 +474,7 @@ private fun NavigationLayout(
                     scrollSpeed = remoteSettings.mouseScrollSpeed,
                     shouldInvertMouseScrollingDirection = remoteSettings.shouldInvertMouseScrollingDirection,
                     useGyroscope = remoteSettings.useGyroscope,
+                    useReadingMode = remoteSettings.useReadingMode,
                     sendMouseInput = sendMouseKeyReport,
                     isFullscreen = isFullscreen,
                     modifier = if(isFullscreen) Modifier.fillMaxSize() else Modifier

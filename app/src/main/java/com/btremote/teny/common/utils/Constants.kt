@@ -24,6 +24,7 @@ const val DEFAULT_MOUSE_SPEED: Float = 1f
 const val DEFAULT_MOUSE_SCROLL_SPEED: Float = 1f
 const val DEFAULT_SHOULD_INVERT_MOUSE_SCROLLING_DIRECTION: Boolean = false
 const val DEFAULT_USE_GYROSCOPE: Boolean = false
+const val DEFAULT_USE_READING_MODE: Boolean = false
 const val TAP_DURATION_MAX: Long = 200L
 const val TAP_DRIFT_MAX_PX: Float = 5f
 

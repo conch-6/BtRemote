@@ -57,6 +57,10 @@ class DataStoreRepositoryImpl(
         settingsDataStore.saveUseGyroscope(useGyroscope)
     }
 
+    override suspend fun saveUseReadingMode(useReadingMode: Boolean) {
+        settingsDataStore.saveUseReadingMode(useReadingMode)
+    }
+
     override suspend fun saveKeyboardLanguage(language: KeyboardLanguage) {
         settingsDataStore.saveKeyboardLanguage(language)
     }

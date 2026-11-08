@@ -250,6 +250,8 @@
     <string name="page_up">向上翻页</string>
     <string name="page_down">向下翻页</string>
     <string name="mouse_scroll_speed">滚动速度</string>
+    <string name="use_reading_mode">阅读翻页模式</string>
+    <string name="use_reading_mode_info">在触控板上滑动即可顺滑翻页，不用按住左键</string>
     <string name="show_remote_buttons_in_notification">在通知中显示遥控按钮</string>
     <string name="keyboard_arabic">阿拉伯语</string>
 </resources>

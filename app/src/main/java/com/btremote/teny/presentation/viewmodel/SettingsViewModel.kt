@@ -56,6 +56,10 @@ class SettingsViewModel(
         useCase.saveUseGyroscope(useGyroscope)
     }
 
+    fun saveUseReadingMode(useReadingMode: Boolean) = viewModelScope.launch {
+        useCase.saveUseReadingMode(useReadingMode)
+    }
+
     fun changeKeyboardLanguage(language: KeyboardLanguage) = viewModelScope.launch {
         useCase.saveKeyboardLanguage(language)
     }

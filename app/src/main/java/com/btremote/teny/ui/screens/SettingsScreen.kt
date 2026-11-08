@@ -338,6 +338,19 @@ fun SettingsScreen(
                     )
             )
 
+            SettingsSwitch(
+                primaryText = stringResource(id = R.string.use_reading_mode),
+                secondaryText = stringResource(id = R.string.use_reading_mode_info),
+                checked = remoteSettings.useReadingMode,
+                onCheckedChange = { settingsViewModel.saveUseReadingMode(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = horizontalPadding,
+                        vertical = verticalPadding
+                    )
+            )
+
             HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()

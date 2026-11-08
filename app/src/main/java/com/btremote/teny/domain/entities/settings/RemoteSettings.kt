@@ -11,6 +11,7 @@ import com.btremote.teny.common.utils.DEFAULT_USE_ADVANCED_KEYBOARD_INTEGRATED
 import com.btremote.teny.common.utils.DEFAULT_USE_ENTER_FOR_SELECTION
 import com.btremote.teny.common.utils.DEFAULT_USE_GYROSCOPE
 import com.btremote.teny.common.utils.DEFAULT_USE_MINIMALIST_REMOTE
+import com.btremote.teny.common.utils.DEFAULT_USE_READING_MODE
 import com.btremote.teny.common.utils.USE_MOUSE_NAVIGATION_BY_DEFAULT
 import com.btremote.teny.domain.entities.RemoteNavigationEntity
 import com.btremote.teny.domain.entities.remoteInput.VolumePhysicalButtonAction
@@ -22,6 +23,7 @@ data class RemoteSettings(
     val mouseScrollSpeed: Float = DEFAULT_MOUSE_SCROLL_SPEED,
     val shouldInvertMouseScrollingDirection: Boolean = DEFAULT_SHOULD_INVERT_MOUSE_SCROLLING_DIRECTION,
     val useGyroscope: Boolean = DEFAULT_USE_GYROSCOPE,
+    val useReadingMode: Boolean = DEFAULT_USE_READING_MODE,
 
     // ---- Keyboard ----
     val keyboardLanguage: KeyboardLanguage = DEFAULT_KEYBOARD_LANGUAGE,
