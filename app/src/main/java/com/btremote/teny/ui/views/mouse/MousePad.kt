@@ -1,6 +1,5 @@
 package com.btremote.teny.ui.views.mouse
 
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,6 +72,9 @@ fun MousePad(
     val readingAccY = remember { Ref(0f) }
     val readingReportCount = remember { Ref(0) }
     val readingDistanceSum = remember { Ref(0f) }
+    // Set when the drag's button was released (lift or second finger) and the paced
+    // return move is still owed. The return runs outside the event scope, see below.
+    val readingReturnPending = remember { Ref(false) }
 
     DefaultElevatedCard(
         modifier = modifier,
@@ -82,69 +84,86 @@ fun MousePad(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(mouseSpeed, scrollSpeed, useReadingMode) {
-                    awaitEachGesture {
-                        awaitFirstDown()
-                        readingDragActive.value = false
-                        readingDrift.value = 0f
-                        readingAccX.value = 0f
-                        readingAccY.value = 0f
-                        readingReportCount.value = 0
-                        readingDistanceSum.value = 0f
+                    // One gesture per loop iteration. The gesture lives inside the restricted
+                    // AwaitPointerEventScope (which only allows its own suspending calls), while
+                    // the paced re-centering return needs plain delay(), so it runs OUTSIDE, in
+                    // the loop below. Events that arrive while the return is pacing simply queue
+                    // and are picked up by the next awaitFirstDown(), which also guarantees the
+                    // return reports and the next gesture's button press never interleave.
+                    while (true) {
                         try {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val inputChanges = event.changes
+                            awaitPointerEventScope {
+                                awaitFirstDown()
+                                readingDragActive.value = false
+                                readingDrift.value = 0f
+                                readingAccX.value = 0f
+                                readingAccY.value = 0f
+                                readingReportCount.value = 0
+                                readingDistanceSum.value = 0f
+                                readingReturnPending.value = false
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val inputChanges = event.changes
 
-                                if (useReadingMode) {
-                                    doReadingScroll(
-                                        mouseSpeed = mouseSpeed,
+                                    if (useReadingMode) {
+                                        doReadingScroll(
+                                            mouseSpeed = mouseSpeed,
+                                            inputChanges = inputChanges,
+                                            dragActive = readingDragActive,
+                                            drift = readingDrift,
+                                            accX = readingAccX,
+                                            accY = readingAccY,
+                                            reportCount = readingReportCount,
+                                            distanceSum = readingDistanceSum,
+                                            returnPending = readingReturnPending,
+                                            sendMouseAction = sendMouseAction,
+                                            sendMousePosition = sendMousePosition
+                                        )
+                                    } else {
+                                        doMove(
+                                            mouseSpeed = mouseSpeed,
+                                            inputChanges = inputChanges,
+                                            sendMousePosition = sendMousePosition
+                                        )
+                                    }
+
+                                    doTap(
                                         inputChanges = inputChanges,
-                                        dragActive = readingDragActive,
-                                        drift = readingDrift,
-                                        accX = readingAccX,
-                                        accY = readingAccY,
-                                        reportCount = readingReportCount,
-                                        distanceSum = readingDistanceSum,
-                                        sendMouseAction = sendMouseAction,
-                                        sendMousePosition = sendMousePosition
+                                        tapStartTimestamp = tapStartTimestamp.value,
+                                        onTapStartTimestampChange = { tapStartTimestamp.value = it },
+                                        tapFingerCount = tapFingerCount.value,
+                                        onTapFingerCountChange = { tapFingerCount.value = it },
+                                        tapAccumulatedDrift = tapAccumulatedDrift.value,
+                                        onTapAccumulatedDriftChange = { tapAccumulatedDrift.value = it },
+                                        sendMouseAction = sendMouseAction
                                     )
-                                } else {
-                                    doMove(
-                                        mouseSpeed = mouseSpeed,
+
+                                    doWheel(
                                         inputChanges = inputChanges,
-                                        sendMousePosition = sendMousePosition
+                                        scrollSpeed = scrollSpeed,
+                                        scrollAccumulator = scrollAccumulator,
+                                        sendMouseScroll = sendMouseScroll
                                     )
+
+                                    inputChanges.forEach { it.consume() }
+
+                                    // The gesture is over once every pointer is up. A second
+                                    // finger keeps the loop alive so doWheel can scroll on.
+                                    if (inputChanges.all { !it.pressed }) break
                                 }
-
-                                doTap(
-                                    inputChanges = inputChanges,
-                                    tapStartTimestamp = tapStartTimestamp.value,
-                                    onTapStartTimestampChange = { tapStartTimestamp.value = it },
-                                    tapFingerCount = tapFingerCount.value,
-                                    onTapFingerCountChange = { tapFingerCount.value = it },
-                                    tapAccumulatedDrift = tapAccumulatedDrift.value,
-                                    onTapAccumulatedDriftChange = { tapAccumulatedDrift.value = it },
-                                    sendMouseAction = sendMouseAction
-                                )
-
-                                doWheel(
-                                    inputChanges = inputChanges,
-                                    scrollSpeed = scrollSpeed,
-                                    scrollAccumulator = scrollAccumulator,
-                                    sendMouseScroll = sendMouseScroll
-                                )
-
-                                inputChanges.forEach { it.consume() }
-
                             }
                         } finally {
                             // If a gesture was interrupted before a clean lift, never leave the
-                            // left button held down on the controlled device.
+                            // left button held down on the controlled device (doReadingScroll
+                            // already releases it on a clean lift or second finger).
                             if (readingDragActive.value) {
+                                sendMouseAction(MouseAction.NONE)
+                                readingReturnPending.value = true
+                            }
+                            if (readingReturnPending.value) {
                                 finishReadingDrag(
-                                    readingDragActive, readingDrift, readingAccX, readingAccY,
-                                    readingReportCount, readingDistanceSum,
-                                    sendMouseAction, sendMousePosition
+                                    readingAccX, readingAccY, readingReportCount, readingDistanceSum,
+                                    readingReturnPending, sendMousePosition
                                 )
                             }
                         }
@@ -254,13 +273,12 @@ private fun doWheel(
  * tap stays a normal click, because doTap still decides taps and its drift stays under
  * the tap threshold.
  *
- * When the finger lifts (or a second finger joins), the button is released FIRST and then
- * the cursor is returned with button-up moves, which only reposition the cursor and do
- * NOT scroll. The return travels straight back towards where the swipe began, paced at
- * the drag's own speed (see finishReadingDrag), so every swipe starts from the same spot
- * and never runs into a screen edge.
+ * When the finger lifts (or a second finger joins), the button is released HERE, so a
+ * following two-finger wheel scroll cannot drag, and the paced cursor return is merely
+ * flagged: it runs after the gesture loop exits, because its delay() pacing is forbidden
+ * inside the restricted event scope (see finishReadingDrag).
  */
-private suspend fun doReadingScroll(
+private fun doReadingScroll(
     mouseSpeed: Float,
     inputChanges: List<PointerInputChange>,
     dragActive: Ref<Boolean>,
@@ -269,12 +287,18 @@ private suspend fun doReadingScroll(
     accY: Ref<Float>,
     reportCount: Ref<Int>,
     distanceSum: Ref<Float>,
+    returnPending: Ref<Boolean>,
     sendMouseAction: (MouseAction) -> Unit,
     sendMousePosition: (Float, Float) -> Unit
 ) {
-    // Multi-finger gestures keep their original handling (doTap / doWheel).
+    // Multi-finger gestures keep their original handling (doTap / doWheel); the held
+    // button is just released so the two-finger wheel scroll cannot drag.
     if (inputChanges.size != 1) {
-        finishReadingDrag(dragActive, drift, accX, accY, reportCount, distanceSum, sendMouseAction, sendMousePosition)
+        if (dragActive.value) {
+            sendMouseAction(MouseAction.NONE)
+            dragActive.value = false
+            returnPending.value = true
+        }
         return
     }
 
@@ -286,8 +310,12 @@ private suspend fun doReadingScroll(
     if (change.changedToDown()) return
 
     if (!change.pressed) {
-        // Finger lifted: end the drag (or simply reset state when it stayed a tap).
-        finishReadingDrag(dragActive, drift, accX, accY, reportCount, distanceSum, sendMouseAction, sendMousePosition)
+        // Finger lifted: release the button; the paced return runs after the gesture loop.
+        if (dragActive.value) {
+            sendMouseAction(MouseAction.NONE)
+            dragActive.value = false
+            returnPending.value = true
+        }
         return
     }
 
@@ -319,7 +347,9 @@ private suspend fun doReadingScroll(
 }
 
 /**
- * Releases the button and returns the cursor to where the swipe began.
+ * Releases-driven cursor return: undoes the wire-truth net displacement of the finished
+ * drag and brings the cursor back to where the swipe began, so the next swipe starts
+ * fresh and never runs into a screen edge.
  *
  * The return is PACED instead of instantaneous. Pointer gain on the controlled device
  * depends on movement speed (pointer ballistics), so an instantaneous burst of reports
@@ -332,47 +362,43 @@ private suspend fun doReadingScroll(
  * counts are sized from the drag's average step so the return travels at the drag's own
  * speed. Both phases then receive the same gain treatment and the landing point stops
  * depending on how fast the finger happened to move.
+ *
+ * Must run OUTSIDE the restricted AwaitPointerEventScope: it suspends in delay() between
+ * reports. The gesture loop only gets here after the gesture's events are fully handled,
+ * and the next gesture cannot start until this returns, so reports stay ordered.
  */
 private suspend fun finishReadingDrag(
-    dragActive: Ref<Boolean>,
-    drift: Ref<Float>,
     accX: Ref<Float>,
     accY: Ref<Float>,
     reportCount: Ref<Int>,
     distanceSum: Ref<Float>,
-    sendMouseAction: (MouseAction) -> Unit,
+    returnPending: Ref<Boolean>,
     sendMousePosition: (Float, Float) -> Unit
 ) {
-    if (dragActive.value) {
-        // Release the button before re-centering, so the return move does not scroll.
-        sendMouseAction(MouseAction.NONE)
+    val targetX = -accX.value * READING_RETURN_SCALE
+    val targetY = -accY.value * READING_RETURN_SCALE
+    val avgDragStep = if (reportCount.value > 0) distanceSum.value / reportCount.value else 0f
+    // Scaling the drag's average step by the pacing ratio (delay / frame time) gives
+    // the return the same counts-per-ms velocity the drag had on the controlled device.
+    val returnStep = (avgDragStep * READING_RETURN_DELAY_MS / READING_DRAG_FRAME_MS)
+        .coerceIn(1f, READING_RETURN_STEP)
+    val steps = ceil(sqrt(targetX * targetX + targetY * targetY) / returnStep).toInt()
 
-        val targetX = -accX.value * READING_RETURN_SCALE
-        val targetY = -accY.value * READING_RETURN_SCALE
-        val avgDragStep = if (reportCount.value > 0) distanceSum.value / reportCount.value else 0f
-        // Scaling the drag's average step by the pacing ratio (delay / frame time) gives
-        // the return the same counts-per-ms velocity the drag had on the controlled device.
-        val returnStep = (avgDragStep * READING_RETURN_DELAY_MS / READING_DRAG_FRAME_MS)
-            .coerceIn(1f, READING_RETURN_STEP)
-        val steps = ceil(sqrt(targetX * targetX + targetY * targetY) / returnStep).toInt()
-
-        var sentX = 0
-        var sentY = 0
-        for (i in 1..steps) {
-            // Running-total rounding distributes the fractional counts losslessly: the
-            // emitted deltas always add up to the rounded target, never drift by rounding.
-            val x = (targetX * i / steps).roundToInt()
-            val y = (targetY * i / steps).roundToInt()
-            if (x != sentX || y != sentY) {
-                sendMousePosition((x - sentX).toFloat(), (y - sentY).toFloat())
-                sentX = x
-                sentY = y
-            }
-            if (i < steps) delay(READING_RETURN_DELAY_MS)
+    var sentX = 0
+    var sentY = 0
+    for (i in 1..steps) {
+        // Running-total rounding distributes the fractional counts losslessly: the
+        // emitted deltas always add up to the rounded target, never drift by rounding.
+        val x = (targetX * i / steps).roundToInt()
+        val y = (targetY * i / steps).roundToInt()
+        if (x != sentX || y != sentY) {
+            sendMousePosition((x - sentX).toFloat(), (y - sentY).toFloat())
+            sentX = x
+            sentY = y
         }
-        dragActive.value = false
+        if (i < steps) delay(READING_RETURN_DELAY_MS)
     }
-    drift.value = 0f
+    returnPending.value = false
     accX.value = 0f
     accY.value = 0f
     reportCount.value = 0
