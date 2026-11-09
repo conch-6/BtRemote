@@ -454,7 +454,7 @@ private fun NavigationLayout(
     remoteSettings: RemoteSettings,
     sendRemoteKeyReport: (ByteArray) -> Unit,
     sendKeyboardKeyReport: (ByteArray) -> Unit,
-    sendMouseKeyReport: (input: MouseAction, x: Float, y: Float, wheel: Float) -> Unit,
+    sendMouseKeyReport: (input: MouseAction, x: Float, y: Float, wheel: Float) -> Boolean,
     navigationToggle: NavigationToggle,
     isFullscreen: Boolean
 ) {

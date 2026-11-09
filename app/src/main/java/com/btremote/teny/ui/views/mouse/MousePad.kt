@@ -18,33 +18,33 @@ import com.btremote.teny.common.utils.TAP_DURATION_MAX
 import com.btremote.teny.domain.entities.remoteInput.MouseAction
 import com.btremote.teny.ui.components.DefaultElevatedCard
 import kotlinx.coroutines.delay
-import kotlin.math.ceil
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 // A single HID mouse report carries 8-bit signed relative values (-127..127), so drag
-// deltas are capped to that range and the cursor re-centering move is split into chunks
-// that each fit into one report.
+// deltas are capped to that range and the re-centering move is split into chunks that
+// each fit into one report.
 private const val HID_RELATIVE_MAX = 127f
-private const val READING_RETURN_STEP = 100f
+private const val HID_REPORT_CHUNK_MAX = 127
 
-// The re-centering return is PACED, not instantaneous. Pointer gain on the controlled
-// device depends on movement speed (pointer ballistics), so the old instantaneous burst
-// return was amplified relative to the finger-paced drag: short drifts overshot, fast
-// flicks undershot, and reversal gestures (mixed speeds) were the most erratic. Sending
-// each return report READING_RETURN_DELAY_MS after the previous one, with counts sized
-// from the drag's average step (see finishReadingDrag), makes the return travel at the
-// drag's average speed. Both phases then get the same gain treatment and the landing
-// point no longer depends on how fast the finger happened to move.
-private const val READING_RETURN_DELAY_MS = 8L
-private const val READING_DRAG_FRAME_MS = 1000f / 60f
+// Absolute cursor re-centering for reading mode. A relative mouse cannot address a
+// position - the controlled device never tells us where the cursor is - so the return
+// borrows the screen edges as a reference frame (see finishReadingDrag): flood the
+// cursor into the top-left corner, then walk half the panel to the exact centre.
+// RECENTER_CORNER_COUNTS must exceed the farthest possible corner distance of the panel
+// (1080+2400 = 3480 counts) even at a low pointer-speed gain (~0.45x).
+private const val RECENTER_CORNER_COUNTS = 8000f
 
-// Fraction of the accumulated drag displacement sent back after the finger lifts.
-// 1.0 is physically exact when the device gain is purely speed-dependent (the common
-// case: pointer ballistics apply equally to held and free moves). If real-device testing
-// shows the cursor consistently overshooting the start (lands mirrored past it), the
-// device also halves held moves - set this to 0.5f.
-private const val READING_RETURN_SCALE = 1.0f
+// Half of the controlled phone's panel (1080 x 2400 portrait), in report counts. This
+// assumes the controlled device's pointer speed is at its default 1:1 scale. Update
+// these when targeting another panel or when reading in landscape.
+private const val RECENTER_HALF_WIDTH = 540f
+private const val RECENTER_HALF_HEIGHT = 1200f
+
+// A failed report is retried with an exponential backoff (2/4/8/16ms); this many
+// consecutive failures means Bluetooth most likely dropped - give up and let the next
+// swipe re-center again instead of spinning forever.
+private const val RECENTER_SEND_MAX_ATTEMPTS = 10
+private const val RECENTER_RETRY_DELAY_MS = 2L
 
 @Composable
 fun MousePad(
@@ -52,7 +52,7 @@ fun MousePad(
     scrollSpeed: Float,
     useReadingMode: Boolean,
     sendMouseAction: (input: MouseAction) -> Unit,
-    sendMousePosition: (Float, Float) -> Unit,
+    sendMousePosition: (Float, Float) -> Boolean,
     sendMouseScroll: (Float) -> Unit,
     shape: Shape,
     modifier: Modifier = Modifier
@@ -62,18 +62,12 @@ fun MousePad(
     val tapAccumulatedDrift = remember { Ref(0f) }
     val scrollAccumulator = remember { Ref(0f) }
 
-    // Reading mode keeps the cursor close to where each swipe began so it can never
-    // drift into a screen edge and stop scrolling halfway through a page. The return
-    // move is paced at the drag's own speed (see finishReadingDrag), so the drag keeps
-    // wire-truth stats: how many reports were sent and how far they travelled in total.
+    // Reading mode re-centers the cursor to the exact screen centre after every swipe so
+    // it can never drift into a screen edge and stop scrolling halfway through a page.
     val readingDragActive = remember { Ref(false) }
     val readingDrift = remember { Ref(0f) }
-    val readingAccX = remember { Ref(0f) }
-    val readingAccY = remember { Ref(0f) }
-    val readingReportCount = remember { Ref(0) }
-    val readingDistanceSum = remember { Ref(0f) }
-    // Set when the drag's button was released (lift or second finger) and the paced
-    // return move is still owed. The return runs outside the event scope, see below.
+    // Set when the drag's button was released (lift or second finger) and the re-centering
+    // return is still owed. The return runs outside the event scope, see below.
     val readingReturnPending = remember { Ref(false) }
 
     DefaultElevatedCard(
@@ -86,20 +80,17 @@ fun MousePad(
                 .pointerInput(mouseSpeed, scrollSpeed, useReadingMode) {
                     // One gesture per loop iteration. The gesture lives inside the restricted
                     // AwaitPointerEventScope (which only allows its own suspending calls), while
-                    // the paced re-centering return needs plain delay(), so it runs OUTSIDE, in
-                    // the loop below. Events that arrive while the return is pacing simply queue
-                    // and are picked up by the next awaitFirstDown(), which also guarantees the
-                    // return reports and the next gesture's button press never interleave.
+                    // the re-centering return needs plain delay() for its retry backoff, so it
+                    // runs OUTSIDE, in the loop below. Events that arrive while the return is
+                    // sending simply queue and are picked up by the next awaitFirstDown(), which
+                    // also guarantees the return reports and the next gesture's button press
+                    // never interleave.
                     while (true) {
                         try {
                             awaitPointerEventScope {
                                 awaitFirstDown()
                                 readingDragActive.value = false
                                 readingDrift.value = 0f
-                                readingAccX.value = 0f
-                                readingAccY.value = 0f
-                                readingReportCount.value = 0
-                                readingDistanceSum.value = 0f
                                 readingReturnPending.value = false
                                 while (true) {
                                     val event = awaitPointerEvent()
@@ -111,10 +102,6 @@ fun MousePad(
                                             inputChanges = inputChanges,
                                             dragActive = readingDragActive,
                                             drift = readingDrift,
-                                            accX = readingAccX,
-                                            accY = readingAccY,
-                                            reportCount = readingReportCount,
-                                            distanceSum = readingDistanceSum,
                                             returnPending = readingReturnPending,
                                             sendMouseAction = sendMouseAction,
                                             sendMousePosition = sendMousePosition
@@ -161,10 +148,7 @@ fun MousePad(
                                 readingReturnPending.value = true
                             }
                             if (readingReturnPending.value) {
-                                finishReadingDrag(
-                                    readingAccX, readingAccY, readingReportCount, readingDistanceSum,
-                                    readingReturnPending, sendMousePosition
-                                )
+                                finishReadingDrag(readingReturnPending, sendMousePosition)
                             }
                         }
                     }
@@ -178,7 +162,7 @@ fun MousePad(
 private fun doMove(
     mouseSpeed: Float,
     inputChanges: List<PointerInputChange>,
-    sendMousePosition: (Float, Float) -> Unit
+    sendMousePosition: (Float, Float) -> Boolean
 ) {
     if(inputChanges.size != 1) return
     val delta: Offset = inputChanges.first().positionChange()
@@ -274,22 +258,18 @@ private fun doWheel(
  * the tap threshold.
  *
  * When the finger lifts (or a second finger joins), the button is released HERE, so a
- * following two-finger wheel scroll cannot drag, and the paced cursor return is merely
- * flagged: it runs after the gesture loop exits, because its delay() pacing is forbidden
- * inside the restricted event scope (see finishReadingDrag).
+ * following two-finger wheel scroll cannot drag, and the cursor return is merely flagged:
+ * it runs after the gesture loop exits, because its retry backoff needs delay(), which is
+ * forbidden inside the restricted event scope (see finishReadingDrag).
  */
 private fun doReadingScroll(
     mouseSpeed: Float,
     inputChanges: List<PointerInputChange>,
     dragActive: Ref<Boolean>,
     drift: Ref<Float>,
-    accX: Ref<Float>,
-    accY: Ref<Float>,
-    reportCount: Ref<Int>,
-    distanceSum: Ref<Float>,
     returnPending: Ref<Boolean>,
     sendMouseAction: (MouseAction) -> Unit,
-    sendMousePosition: (Float, Float) -> Unit
+    sendMousePosition: (Float, Float) -> Boolean
 ) {
     // Multi-finger gestures keep their original handling (doTap / doWheel); the held
     // button is just released so the two-finger wheel scroll cannot drag.
@@ -333,74 +313,71 @@ private fun doReadingScroll(
     val dx = (delta.x * mouseSpeed).coerceIn(-HID_RELATIVE_MAX, HID_RELATIVE_MAX)
     val dy = (delta.y * mouseSpeed).coerceIn(-HID_RELATIVE_MAX, HID_RELATIVE_MAX)
     if (dx != 0f || dy != 0f) {
-        // The return move must undo exactly what the device received, and it must travel at
-        // the drag's own speed, so the stats track the WIRE truth: the integer counts that
-        // sendMousePosition actually delivers (it rounds to Int), not the raw finger deltas.
-        val wireDx = dx.roundToInt()
-        val wireDy = dy.roundToInt()
+        // The return move is absolute (corner + half panel) and does not depend on the
+        // drag's history, so there is nothing to track here.
         sendMousePosition(dx, dy)
-        accX.value += wireDx
-        accY.value += wireDy
-        reportCount.value += 1
-        distanceSum.value += sqrt((wireDx * wireDx + wireDy * wireDy).toFloat())
     }
 }
 
 /**
- * Releases-driven cursor return: undoes the wire-truth net displacement of the finished
- * drag and brings the cursor back to where the swipe began, so the next swipe starts
- * fresh and never runs into a screen edge.
+ * Absolute cursor re-centering: brings the cursor to the exact centre of the controlled
+ * screen, no matter where the drag left it or how fast the finger was moving.
  *
- * The return is PACED instead of instantaneous. Pointer gain on the controlled device
- * depends on movement speed (pointer ballistics), so an instantaneous burst of reports
- * is amplified relative to the finger-paced drag - that mismatch is what made the old
- * fixed-scale return land short on flicks and past the start on slow swipes, and it hit
- * reversal gestures (fast out, slow back) the hardest.
+ * A relative mouse has no way to say "go to position X,Y" - the device never tells us
+ * where the cursor is. So the return borrows the screen edges as a reference frame:
  *
- * Instead, the total return counts are READING_RETURN_SCALE times the wire-truth net
- * displacement, distributed losslessly with running-total rounding, and the per-report
- * counts are sized from the drag's average step so the return travels at the drag's own
- * speed. Both phases then receive the same gain treatment and the landing point stops
- * depending on how fast the finger happened to move.
+ *  1. Flood the cursor into the TOP-LEFT corner with a huge relative move. Excess counts
+ *     are clamped by the screen itself, so this phase can never overshoot, and it is
+ *     immune to the device's pointer-speed scaling.
+ *  2. From the corner, walk exactly half the panel width and height. The centre is a
+ *     known constant offset from the corner.
  *
- * Must run OUTSIDE the restricted AwaitPointerEventScope: it suspends in delay() between
- * reports. The gesture loop only gets here after the gesture's events are fully handled,
+ * The controlled device is an Android phone without pointer acceleration, so reports can
+ * be sent at full speed without affecting accuracy: every report moves the cursor by a
+ * fixed counts-to-pixels scale regardless of pacing. Each report's delivery is confirmed
+ * by sendMousePosition and retried on failure, so nothing is silently dropped.
+ *
+ * Must run OUTSIDE the restricted AwaitPointerEventScope: it suspends in delay() while
+ * retrying. The gesture loop only gets here after the gesture's events are fully handled,
  * and the next gesture cannot start until this returns, so reports stay ordered.
  */
 private suspend fun finishReadingDrag(
-    accX: Ref<Float>,
-    accY: Ref<Float>,
-    reportCount: Ref<Int>,
-    distanceSum: Ref<Float>,
     returnPending: Ref<Boolean>,
-    sendMousePosition: (Float, Float) -> Unit
+    sendMousePosition: (Float, Float) -> Boolean
 ) {
-    val targetX = -accX.value * READING_RETURN_SCALE
-    val targetY = -accY.value * READING_RETURN_SCALE
-    val avgDragStep = if (reportCount.value > 0) distanceSum.value / reportCount.value else 0f
-    // Scaling the drag's average step by the pacing ratio (delay / frame time) gives
-    // the return the same counts-per-ms velocity the drag had on the controlled device.
-    val returnStep = (avgDragStep * READING_RETURN_DELAY_MS / READING_DRAG_FRAME_MS)
-        .coerceIn(1f, READING_RETURN_STEP)
-    val steps = ceil(sqrt(targetX * targetX + targetY * targetY) / returnStep).toInt()
+    // Flood into the top-left corner, then walk half the panel to the exact centre.
+    sendAbsoluteCounts(-RECENTER_CORNER_COUNTS, -RECENTER_CORNER_COUNTS, sendMousePosition)
+    sendAbsoluteCounts(RECENTER_HALF_WIDTH, RECENTER_HALF_HEIGHT, sendMousePosition)
+    returnPending.value = false
+}
 
+/**
+ * Sends (totalX, totalY) relative counts as a sequence of one-report chunks, confirming
+ * each chunk and retrying failures with an exponential backoff (2/4/8/16ms). Successful
+ * sends are followed immediately by the next chunk - as fast as Bluetooth accepts them.
+ * Giving up after RECENTER_SEND_MAX_ATTEMPTS consecutive failures keeps this bounded when
+ * Bluetooth has most likely dropped; the next swipe simply re-centers again.
+ */
+private suspend fun sendAbsoluteCounts(
+    totalX: Float,
+    totalY: Float,
+    sendMousePosition: (Float, Float) -> Boolean
+) {
+    val targetX = totalX.roundToInt()
+    val targetY = totalY.roundToInt()
     var sentX = 0
     var sentY = 0
-    for (i in 1..steps) {
-        // Running-total rounding distributes the fractional counts losslessly: the
-        // emitted deltas always add up to the rounded target, never drift by rounding.
-        val x = (targetX * i / steps).roundToInt()
-        val y = (targetY * i / steps).roundToInt()
-        if (x != sentX || y != sentY) {
-            sendMousePosition((x - sentX).toFloat(), (y - sentY).toFloat())
-            sentX = x
-            sentY = y
+    while (sentX != targetX || sentY != targetY) {
+        val stepX = (targetX - sentX).coerceIn(-HID_REPORT_CHUNK_MAX, HID_REPORT_CHUNK_MAX)
+        val stepY = (targetY - sentY).coerceIn(-HID_REPORT_CHUNK_MAX, HID_REPORT_CHUNK_MAX)
+        var attempt = 0
+        while (true) {
+            if (sendMousePosition(stepX.toFloat(), stepY.toFloat())) break
+            attempt++
+            if (attempt >= RECENTER_SEND_MAX_ATTEMPTS) return
+            delay(RECENTER_RETRY_DELAY_MS shl (attempt - 1).coerceAtMost(3))
         }
-        if (i < steps) delay(READING_RETURN_DELAY_MS)
+        sentX += stepX
+        sentY += stepY
     }
-    returnPending.value = false
-    accX.value = 0f
-    accY.value = 0f
-    reportCount.value = 0
-    distanceSum.value = 0f
 }

@@ -34,7 +34,7 @@ fun MousePadLayout(
     shouldInvertMouseScrollingDirection: Boolean,
     useGyroscope: Boolean,
     useReadingMode: Boolean,
-    sendMouseInput: (MouseAction, Float, Float, Float) -> Unit,
+    sendMouseInput: (MouseAction, Float, Float, Float) -> Boolean,
     modifier: Modifier = Modifier,
     isFullscreen: Boolean = false
 ) {

@@ -41,7 +41,7 @@ class RemoteViewModel(
     val sendRemoteReport: (ByteArray) -> Unit = { bytes -> sendReport(REMOTE_REPORT_ID, bytes) }
 
     // Mouse
-    val sendMouseReport: (MouseAction, Float, Float, Float) -> Unit = { input, x, y, wheel ->
+    val sendMouseReport: (MouseAction, Float, Float, Float) -> Boolean = { input, x, y, wheel ->
         val xInt = x.roundToInt().coerceIn(-127, 127)
         val yInt = y.roundToInt().coerceIn(-127, 127)
         val bytes: ByteArray = byteArrayOf(input.byte, xInt.toByte(), yInt.toByte(), wheel.roundToInt().toByte())
