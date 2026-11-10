@@ -1,6 +1,9 @@
 package com.btremote.teny.ui.views.mouse
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absolutePadding
@@ -10,13 +13,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -24,8 +32,8 @@ import com.btremote.teny.R
 import com.btremote.teny.common.utils.AppIcons
 import com.btremote.teny.common.utils.Ref
 import com.btremote.teny.domain.entities.remoteInput.MouseAction
+import com.btremote.teny.ui.components.DefaultElevatedCard
 import com.btremote.teny.ui.components.customButtons.EmptySurfaceButton
-import com.btremote.teny.ui.components.customButtons.IconHoldButton
 
 @Composable
 fun MousePadLayout(
@@ -89,10 +97,11 @@ fun MousePadLayout(
                 color = MaterialTheme.colorScheme.outline
             )
 
-            ScrollMouseButtonsLayout(
+            ScrollWheelLayout(
                 scrollSpeed = scrollSpeed,
                 sendMouseScroll = {
-                    sendMouseInput(mouseAction.value, 0f, 0f, it)
+                    val mouseWheel = it * if(shouldInvertMouseScrollingDirection) -1f else 1f
+                    sendMouseInput(mouseAction.value, 0f, 0f, mouseWheel)
                 },
                 modifier = Modifier
                     .weight(0.15f)
@@ -175,49 +184,78 @@ private fun MouseButtonsLayout(
     }
 }
 
-// ---- Scroll Up/Down buttons ----
+// ---- Scroll wheel touchpad ----
+
+// The controlled device quantises wheel reports into fixed-size ticks (one count is one
+// "scroll factor" step of roughly a text line), so smoothness comes from sending OFTEN,
+// not from sending big counts: while swiping, each pointer event emits at most one tick,
+// and at swipe pace the next tick arrives before the previous step finished scrolling -
+// a continuous glide instead of the old hold-button's 100ms-per-tick studder. No finger
+// movement means no pointer events, which means no scrolling: the page only moves while
+// the finger does.
+private const val SCROLL_WHEEL_PX_PER_COUNT = 64f
 
 @Composable
-private fun ScrollMouseButtonsLayout(
+private fun ScrollWheelLayout(
     scrollSpeed: Float,
     sendMouseScroll: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        IconHoldButton(
-            image = AppIcons.MouseScrollUp,
-            contentDescription = stringResource(id = R.string.mouse_wheel_up),
-            onHold = {
-                sendMouseScroll(1f)
-            },
-            onRelease = {
-                sendMouseScroll(0f)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.5f)
-                .padding(bottom = dimensionResource(id = R.dimen.padding_min)),
-            durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
-            shape = RoundedCornerShape(topEnd = dimensionResource(id = R.dimen.card_corner_radius))
-        )
+    val scrollAccumulator = remember { Ref(0f) }
 
-        IconHoldButton(
-            image = AppIcons.MouseScrollDown,
-            contentDescription = stringResource(id = R.string.mouse_wheel_down),
-            onHold = {
-                sendMouseScroll(-1f)
-            },
-            onRelease = {
-                sendMouseScroll(0f)
-            },
+    DefaultElevatedCard(
+        modifier = modifier,
+        shape = RoundedCornerShape(topEnd = dimensionResource(id = R.dimen.card_corner_radius))
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.5f)
-                .padding(top = dimensionResource(id = R.dimen.padding_min)),
-            durationBetweenRepeatsInMillis = getScrollDurationBetweenRepeats(scrollSpeed),
-            shape = RectangleShape
-        )
+                .fillMaxSize()
+                .pointerInput(scrollSpeed) {
+                    awaitEachGesture {
+                        awaitFirstDown()
+                        // Each swipe starts from scratch, so a leftover fraction cannot
+                        // make the next touch jump by a whole tick.
+                        scrollAccumulator.value = 0f
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val inputChanges = event.changes
+
+                            if (inputChanges.all { !it.pressed }) break
+
+                            // Vertical only: horizontal travel on the strip is ignored,
+                            // and extra fingers (doWheel-style scrolling) are skipped.
+                            if (inputChanges.size == 1) {
+                                val deltaY = inputChanges.first().positionChange().y
+                                if (deltaY != 0f) {
+                                    scrollAccumulator.value += deltaY * scrollSpeed / SCROLL_WHEEL_PX_PER_COUNT
+                                    val counts = scrollAccumulator.value.toInt().coerceIn(-1, 1)
+                                    if (counts != 0) {
+                                        sendMouseScroll(counts.toFloat())
+                                        scrollAccumulator.value -= counts
+                                    }
+                                }
+                            }
+
+                            inputChanges.forEach { it.consume() }
+                        }
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = AppIcons.MouseScrollUp,
+                    contentDescription = stringResource(id = R.string.mouse_wheel_up),
+                    modifier = Modifier.fillMaxHeight(0.35f),
+                    tint = LocalContentColor.current.copy(alpha = 0.35f)
+                )
+                Icon(
+                    imageVector = AppIcons.MouseScrollDown,
+                    contentDescription = stringResource(id = R.string.mouse_wheel_down),
+                    modifier = Modifier.fillMaxHeight(0.35f),
+                    tint = LocalContentColor.current.copy(alpha = 0.35f)
+                )
+            }
+        }
     }
 }
-
-private fun getScrollDurationBetweenRepeats(speed: Float): Long = speed.takeIf { it > 0f }?.let { (100f / it).toLong().coerceIn(16L, 200L) } ?: 100L
